@@ -8,6 +8,7 @@
 #include "../inc/queue.h"
 #include "../inc/socket.h"
 #include "../inc/mutex.h"
+#include "../inc/map.h"
 
 #define MAX_CLIENTS 50
 #define MAX_ROOMS   20
@@ -18,9 +19,14 @@ struct client {
     char name[32];
     char host[32];
     char port[32];
+    int listen_port;
     struct sockaddr addr;
     socklen_t addrlen;
 } * clients[MAX_CLIENTS];
+
+typedef struct client * client_t;
+
+map_t client_map;
 
 struct room {
     int id;
@@ -45,6 +51,21 @@ void send_help(int);
 void send_rooms(int);
 void send_users(int);
 
+enum CLIENT_STATE{
+    READY,
+    ANNOUNCE,
+    LISTEN,
+    PORT,
+    SEED,
+    LEECH,
+    LOOK,
+    GETFILE,
+    OK,
+    NOK,
+    DESCONNECTED,
+    XXX
+};
+
 int main(int argc, char const *argv[]) {
     if (argc < 2) {
         printf("USAGE : %s PORT\n", argv[0]);
@@ -53,12 +74,17 @@ int main(int argc, char const *argv[]) {
     // create server socket
     socket_server(argv[1]);
     queue_init();
+    client_map = map_new();
     thread_create(&sender_thread, NULL);
-    while(1) {  //wait for each incoming connection and launch the client thread 
+    while(1) {  //wait for each incoming connection and launch the client thread
         struct client *tmp = malloc(sizeof(struct client));
         socket_accept(&tmp->id, &tmp->addr, &tmp->addrlen);
         clients[tmp->id] = tmp;
-        thread_create(&client_thread, &tmp->id);
+        getnameinfo(&tmp->addr, tmp->addrlen,
+            tmp->host, sizeof(tmp->host),
+            tmp->port, sizeof(tmp->port),
+            0);
+        thread_create(&client_thread, tmp);
     }
     socket_close();
     return 0;
@@ -66,23 +92,112 @@ int main(int argc, char const *argv[]) {
 
 //receiving and handling the client messages 
 void client_thread (void* arg) {
-    int client_id = *(int *)arg;
-    if (get_info(client_id)) { return; }
+    client_t client = (client_t)arg;
+    int client_id = client->id;
+    //if (get_info(client_id)) { return; }
 
-    send_msg(client_id, 2, "Welcome");
+    //send_msg(client_id, 2, "Welcome");
     printf("Client Connected %s(%d) FROM %s:%s\n",  clients[client_id]->name, client_id,
                                                     clients[client_id]->host,
                                                     clients[client_id]->port);
-    char buffer[256];
-    //handle client input
+    
+    //handle client input using state machine
+    enum CLIENT_STATE state = READY;
+    char buffer[1024];
     while(1) {
-        if (socket_recv(client_id, buffer, sizeof(buffer)) > 0) {
-            printf("Client Disconnected %s(%d)\n", clients[client_id]->name ,client_id);
-            free(clients[client_id]);
-            clients[client_id]=NULL;
-            return;
+    /*
+    < look [$Criterion1 $Criterion2 …]
+    > list [$Filename1 $Length1 $PieceSize1 $Key1 $Filename2 $Length2 $PieceSize2 $Key2 …]
+    < look [filename=”file_a.dat” filesize>”1048576”]
+    > list [file_a.dat 2097152 1024 8905e92afeb80fc7722ec89eb0bf0966]
+    < getfile $Key
+    > peers $Key [$IP1:$Port1 $IP2:$Port2 …]
+    < getfile 8905e92afeb80fc7722ec89eb0bf0966
+    > peers 8905e92afeb80fc7722ec89eb0bf0966 [1.1.1.2:2222 1.1.1.3:3333]
+    */
+        switch (state) {
+            case READY: {
+                printf("READY\n");
+                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
+                    state = DESCONNECTED;
+                    break;
+                }
+                switch (buffer[0]) {
+                    case 'a': state = ANNOUNCE; break;
+                    case 'l': state = LOOK;     break;
+                    case 'g': state = GETFILE;  break;
+                    default : state = READY;    break;
+                } 
+                //sscanf(strstr(buffer,"seed") , "seed %s",str1);
+                //sscanf(strstr(buffer,"leech"), "leech %s",str2);
+                
+            } break;
+            case ANNOUNCE: {
+                printf("ANNOUNCE\n");
+                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
+                    state = DESCONNECTED;
+                    break;
+                }
+                state = PORT;
+            } break;
+            case PORT: {
+                printf("PORT\n");
+                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
+                    state = DESCONNECTED;
+                    break;
+                }
+                sscanf(buffer,"%d",&(client->listen_port));
+                printf("%d\n", client->listen_port);
+                state = SEED;
+            } break;
+            case SEED: {
+                printf("SEED\n");
+                do {
+                    if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
+                        state = DESCONNECTED;
+                        break;
+                    }
+                } while (strstr(buffer,"]") == NULL);
+                state = LEECH;
+            } break;
+            case LEECH: {
+                printf("LEECH\n");
+                do {
+                    if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
+                        state = DESCONNECTED;
+                        break;
+                    }
+                } while (strstr(buffer,"]") == NULL);
+                state = OK;
+            } break;
+            case XXX: {
+                printf("XXX\n");
+                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
+                    state = DESCONNECTED;
+                    break;
+                }
+
+            } break;
+            case OK: {
+                printf("OK\n");
+                send_msg(client_id, 2, "OK");
+                state = READY;
+            } break;
+            case NOK: {
+                printf("NOK\n");
+                send_msg(client_id, 2, "NOK");
+                state = READY;
+            } break;
+            case DESCONNECTED: {
+                printf("DESCONNECTED\n");
+                printf("Client Disconnected %s(%d)\n", clients[client_id]->name ,client_id);
+                free(clients[client_id]);
+                clients[client_id]=NULL;
+                return;
+            } break;
+            default: { /* NOK */ }
         }
-        command_handler(client_id, buffer);
+        printf("%s\n", buffer);
     }
 }
 
@@ -129,7 +244,23 @@ void command_handler (int client_id, char* buffer) {
     //printf("DEBUG %s(%d)[%s] : %s\n",   clients[client_id]->name, client_id,
     //                                  rooms[clients[client_id]->room_id]->name,
     //                                    buffer);
-    /*if(buffer[0] == '/') {
+    /*
+    < announce listen $Port seed [$Filename1 $Length1 $PieceSize1 $Key1 $Filename2 $Length2 $PieceSize2 $Key2 …] leech [$Key3 $Key4 …]
+    > ok
+    < announce listen 2222 seed [file_a.dat 2097152 1024 8905e92afeb80fc7722ec89eb0bf0966 file_b.dat 3145728 1536 330a57722ec8b0bf09669a2b35f88e9e]
+    > ok
+    < look [$Criterion1 $Criterion2 …]
+    > list [$Filename1 $Length1 $PieceSize1 $Key1 $Filename2 $Length2 $PieceSize2 $Key2 …]
+    < look [filename=”file_a.dat” filesize>”1048576”]
+    > list [file_a.dat 2097152 1024 8905e92afeb80fc7722ec89eb0bf0966]
+    < getfile $Key
+    > peers $Key [$IP1:$Port1 $IP2:$Port2 …]
+    < getfile 8905e92afeb80fc7722ec89eb0bf0966
+    > peers 8905e92afeb80fc7722ec89eb0bf0966 [1.1.1.2:2222 1.1.1.3:3333]
+    */
+
+
+/*
         buffer[5] = '\0';
         if (strcmp(buffer, "/join")==0)          join_room(client_id, buffer+6);  // client typed a command to change room
         else if (strcmp(buffer, "/name")==0)     set_name (client_id, buffer+6, 0);
@@ -146,8 +277,9 @@ void command_handler (int client_id, char* buffer) {
             send_msg(client_id, 2, "Unknown Command");
             send_help(client_id);
         }
-    }*/
     send_msg(client_id, 1, buffer);
+
+*/
 }
 
 // add msg to queue to be sent

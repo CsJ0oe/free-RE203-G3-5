@@ -119,6 +119,24 @@ int socket_recv(int client_id, char* buffer, int buffer_len) {
     return 0;
 }
 
+//receive messages
+int socket_recv_word(int client_id, char* buffer, int buffer_len) {
+    int res = -1, pos = 0;
+    // recv until newline
+    while   (   pos < buffer_len &&
+                (res = recv(client_id, buffer+pos, 1, 0)) == 1 &&
+                buffer[pos] != '\n' && buffer[pos] != '\r' &&
+                buffer[pos] != '\t' && buffer[pos] != ' '
+
+            ) pos++;
+    //int res = recv(client_id, buffer, buffer_len-1, 0);
+    if (res >  0) { buffer[pos]='\0'; }
+    if (res <  0) { perror("socket_recv"); return(1); }
+    if (res == 0) { close(client_id); return 1;} // Client disconnected
+    return 0;
+}
+
+
 //sending messages
 int socket_send(int client_id, char* in_buffer) {
     char buffer[256], *buffer_ptr;
