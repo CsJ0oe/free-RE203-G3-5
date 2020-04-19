@@ -103,7 +103,7 @@ void client_thread (void* arg) {
     client_t client = (client_t)arg;
     int client_id = client->id;
     printf("Client Connected (%d) FROM %s\n", client_id,
-                                                    clients[client_id]->ip_port);
+                                            clients[client_id]->ip_port);
     //handle client input using state machine
     enum CLIENT_STATE state = READY;
     char buffer[1024];
@@ -273,10 +273,14 @@ void client_thread (void* arg) {
                 while (l != NULL) {
                     if (((client_t)(l->data))->id != client->id) {
                         if (first == 0) send_msg(client_id, 1, " ");
-                        send_msg(client_id, 1, ((client_t)(l->data))->ip_port);
+                        send_msg(client_id, 1, ((client_t)(l->data))->host);
+                        send_msg(client_id, 1, ":");
+                        char str[32];
+                        sprintf(str, "%d", ((client_t)(l->data))->listen_port);
+                        send_msg(client_id, 1, str);
+                        first = 0;
                     }
                     l = mapped_list_next(l);
-                    first = 0;
                 }
                 send_msg(client_id, 2, "]");
                 state = EOL;
