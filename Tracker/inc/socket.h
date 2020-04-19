@@ -6,6 +6,7 @@
 //create a server socket
 
 int socket_id; //declaring the socket as a global variable
+int socket_EOL = 0;
 void socket_server(const char* port) {
 	int status;
 	struct addrinfo hints, *result, *rp;
@@ -119,8 +120,32 @@ int socket_recv(int client_id, char* buffer, int buffer_len) {
     return 0;
 }
 
-//receive messages
+//receive words
 int socket_recv_word(int client_id, char* buffer, int buffer_len) {
+    if (socket_EOL==1) {
+        buffer[0]='\0';
+        socket_EOL = 0;
+        return 0;
+    }
+    int res = -1, pos = 0;
+    // recv until newline
+    while   (   pos < buffer_len &&
+                (res = recv(client_id, buffer+pos, 1, 0)) == 1 &&
+                buffer[pos] != '\n' && buffer[pos] != '\r' &&
+                buffer[pos] != '\t' && buffer[pos] != ' '
+
+            ) pos++;
+    if (buffer[pos]==' ')   socket_EOL = 0;
+    else                    socket_EOL = 1;
+    //int res = recv(client_id, buffer, buffer_len-1, 0);
+    if (res >  0) { buffer[pos]='\0'; }
+    if (res <  0) { perror("socket_recv"); return(1); }
+    if (res == 0) { close(client_id); return 1;} // Client disconnected
+    return 0;
+}
+
+//receive chars
+int socket_recv_char(int client_id, char* buffer, int buffer_len) {
     int res = -1, pos = 0;
     // recv until newline
     while   (   pos < buffer_len &&
@@ -135,7 +160,6 @@ int socket_recv_word(int client_id, char* buffer, int buffer_len) {
     if (res == 0) { close(client_id); return 1;} // Client disconnected
     return 0;
 }
-
 
 //sending messages
 int socket_send(int client_id, char* in_buffer) {
