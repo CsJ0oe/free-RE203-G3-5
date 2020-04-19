@@ -1,9 +1,9 @@
 #include <pthread.h>
 
 // function to create a thread 
-void thread_create(void (*func) (void *), int* arg) {
+void thread_create(void (*func) (void *), void* arg) {
 	pthread_t thread;
-    pthread_create(&thread, NULL, (void *) func, (void *) arg );
+    pthread_create(&thread, NULL, (void*)func, (void*)arg);
     pthread_detach(thread);
 }
 

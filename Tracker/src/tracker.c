@@ -243,18 +243,40 @@ void client_thread (void* arg) {
                 sscanf(buffer,"[filename=\"%[^\"]\"]",filename);
                 printf("%s\n", filename);
                 send_msg(client_id, 1, "list [");
-                printf("1\n");
+                int first = 1;
                 list_t l = mapped_list_get(file_names, filename);
-                printf("2\n");
                 while (l != NULL) {
                     char msg[255] = {0};
+                    if (first == 0)
+                        send_msg(client_id, 1, " ");
                     sprintf(msg,"%s %d %d %s", ((file_t)(l->data))->name, ((file_t)(l->data))->length,
                                                ((file_t)(l->data))->piece, ((file_t)(l->data))->key);
-                    printf("3\n");
                     send_msg(client_id, 1, msg);
-                    printf("4\n");
                     l = mapped_list_next(l);
-                    printf("5\n");
+                    first = 0;
+                }
+                send_msg(client_id, 2, "]");
+                state = EOL;
+            } break;
+            case GETFILE: {
+                printf("GETFILE\n");
+                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
+                    state = DESCONNECTED;
+                    break;
+                }
+                printf("%s\n", buffer);
+                send_msg(client_id, 1, "peers ");
+                send_msg(client_id, 1, buffer);
+                send_msg(client_id, 1, " [");
+                int first = 1;
+                list_t l = mapped_list_get(file_peers, buffer);
+                while (l != NULL) {
+                    if (((client_t)(l->data))->id != client->id) {
+                        if (first == 0) send_msg(client_id, 1, " ");
+                        send_msg(client_id, 1, ((client_t)(l->data))->ip_port);
+                    }
+                    l = mapped_list_next(l);
+                    first = 0;
                 }
                 send_msg(client_id, 2, "]");
                 state = EOL;
