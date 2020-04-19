@@ -31,10 +31,12 @@ typedef struct client * client_t;
 map_t client_map;
 map_t file_map;
 mapped_list_t file_peers;
+mapped_list_t file_names;
 
 typedef struct massege {
     int to;
     char* str;
+    int EOL;
 } massege;
 
 typedef struct file {
@@ -76,6 +78,7 @@ int main(int argc, char const *argv[]) {
     client_map = map_new();
     file_map = map_new();
     file_peers = mapped_list_new();
+    file_names = mapped_list_new();
     thread_create(&sender_thread, NULL);
     while(1) {  //wait for each incoming connection and launch the client thread
         struct client *tmp = malloc(sizeof(struct client));
@@ -108,7 +111,7 @@ void client_thread (void* arg) {
     /*
     < look [$Criterion1 $Criterion2 …]
     > list [$Filename1 $Length1 $PieceSize1 $Key1 $Filename2 $Length2 $PieceSize2 $Key2 …]
-    < look [filename=”file_a.dat” filesize>”1048576”]
+    < look [filename="file_a.dat" filesize>”1048576”]
     > list [file_a.dat 2097152 1024 8905e92afeb80fc7722ec89eb0bf0966]
     < getfile $Key
     > peers $Key [$IP1:$Port1 $IP2:$Port2 …]
@@ -194,7 +197,8 @@ void client_thread (void* arg) {
                     state = OPTIONS;
                     tmp->key[strlen(tmp->key)-1] = '\0';
                 }
-                //map_insert(file_map,tmp->key,tmp);
+                map_insert(file_map,tmp->key,tmp);
+                mapped_list_add(file_names, tmp->name, tmp);
                 mapped_list_add(file_peers, tmp->key, client);
             } break;
             case LEECH: {
@@ -225,8 +229,35 @@ void client_thread (void* arg) {
                     state = OPTIONS;
                     tmp->key[strlen(tmp->key)-1] = '\0';
                 }
-                //map_insert(file_map,tmp->key,tmp);
+                map_insert(file_map,tmp->key,tmp);
+                mapped_list_add(file_names, tmp->name, tmp);
                 mapped_list_add(file_peers, tmp->key, client);
+            } break;
+            case LOOK: {
+                printf("LOOK\n");
+                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
+                    state = DESCONNECTED;
+                    break;
+                }
+                char filename[64];
+                sscanf(buffer,"[filename=\"%[^\"]\"]",filename);
+                printf("%s\n", filename);
+                send_msg(client_id, 1, "list [");
+                printf("1\n");
+                list_t l = mapped_list_get(file_names, filename);
+                printf("2\n");
+                while (l != NULL) {
+                    char msg[255] = {0};
+                    sprintf(msg,"%s %d %d %s", ((file_t)(l->data))->name, ((file_t)(l->data))->length,
+                                               ((file_t)(l->data))->piece, ((file_t)(l->data))->key);
+                    printf("3\n");
+                    send_msg(client_id, 1, msg);
+                    printf("4\n");
+                    l = mapped_list_next(l);
+                    printf("5\n");
+                }
+                send_msg(client_id, 2, "]");
+                state = EOL;
             } break;
             case XXX: {
                 printf("XXX\n");
@@ -275,7 +306,7 @@ void sender_thread (void* arg) {
         } else {
             queue_pop((void *)&msg);
             mutex_unlock();
-            socket_send(msg->to, msg->str);
+            socket_send(msg->to, msg->str, msg->EOL);
             free(msg->str);
             free(msg);
         }
@@ -287,6 +318,7 @@ void send_msg(int to, int type, char* buffer) {
     massege* msg = malloc(sizeof(massege));
     msg->to = to;
     msg->str  = malloc(sizeof(char)*(strlen(buffer)+1));
+    msg->EOL = type-1;
     strcpy(msg->str, buffer);
     mutex_lock();
     queue_push(msg);

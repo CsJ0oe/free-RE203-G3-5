@@ -162,11 +162,13 @@ int socket_recv_char(int client_id, char* buffer, int buffer_len) {
 }
 
 //sending messages
-int socket_send(int client_id, char* in_buffer) {
+int socket_send(int client_id, char* in_buffer, int EOL) {
     char buffer[256], *buffer_ptr;
     strcpy(buffer, in_buffer);
-    buffer[strlen(in_buffer)]  ='\n';
-    buffer[strlen(in_buffer)+1]='\0';
+    if (EOL==1) {
+        buffer[strlen(in_buffer)]  ='\n';
+        buffer[strlen(in_buffer)+1]='\0';
+    }
     buffer_ptr = buffer;
     while (strlen(buffer_ptr) > 0) {
         int res = send(client_id, buffer_ptr, strlen(buffer), 0);
