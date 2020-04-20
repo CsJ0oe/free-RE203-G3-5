@@ -1,4 +1,3 @@
-package com.za.networking.peertopeer;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.HashSet;
