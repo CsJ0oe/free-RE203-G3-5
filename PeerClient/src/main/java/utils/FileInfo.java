@@ -2,13 +2,13 @@ package utils;
 
 public class FileInfo {
 
-    public enum Types {SEED, LEECH};
+    public enum Types {SEED, LEECH, REMOTE};
     
     private final String name;
     private final int length;
     private final int pieceSize;
     private final String key;
-    private final Types type;
+    private Types type;
 
     public FileInfo(String name, int length, int pieceSize, String key, Types type) {
         this.name = name;
@@ -41,5 +41,9 @@ public class FileInfo {
     
     public Types getType() {
         return type;
+    }
+    
+    public void setType(Types ty) {
+        this.type = ty;
     }
 }

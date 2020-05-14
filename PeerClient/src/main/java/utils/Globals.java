@@ -7,5 +7,6 @@ public class Globals {
     public static int serverPort = 22222;
     /////////////////////////////
     public static TrackerConnection tracker;
-    public static FileManager fileDatabase = new FileManager();
+    public static final FileManager fileDatabase = new FileManager();
+    public static final PeerManager peerDatabase = new PeerManager();
 }

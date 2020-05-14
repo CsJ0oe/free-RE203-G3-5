@@ -22,11 +22,11 @@ public final class TrackerConnection {
                             Globals.TrackerPort);
         rth = new recvThread(con, txt);
         rth.start();
+        sth = new sendThread(con, txt);
+        sth.start();
         announce(Globals.serverPort,
                  Globals.fileDatabase.getSeedFiles(),
                  Globals.fileDatabase.getLeechFiles());
-        sth = new sendThread(con, txt);
-        sth.start();
     }
     
     public void announce(int port, ArrayList<FileInfo> seeds, ArrayList<FileInfo> leechs) throws IOException {
@@ -56,7 +56,7 @@ public final class TrackerConnection {
     }
     
     public void update(ArrayList<FileInfo> seeds, ArrayList<FileInfo> leechs) throws IOException {
-        String msg = "update seed [";
+        String msg = "announce listen 22222 seed [";
         boolean first = true;
         for (FileInfo seed : seeds) {
             if (first) {
@@ -77,7 +77,7 @@ public final class TrackerConnection {
             msg += leech;
         }
         msg += "]\n";
-        txt.append("<"+msg+"\n");
+        //txt.append("< "+msg+"\n");
         con.send(msg);
         con.flush();
     }
@@ -94,6 +94,43 @@ public final class TrackerConnection {
     
     public void close() throws IOException {
         con.close();
+    }
+
+    void handleResponse(String s) {
+        txt.append("> "+s+"\n");
+        String[] tok = s.replaceAll("[\\[\\]]", "").split(" ");
+        if (tok[0].length() == 0) {
+            txt.append("! empty resp\n");
+            return;
+        }
+        switch (tok[0].charAt(0)) {
+            case 'l': { // list
+                Globals.fileDatabase.clearRemote();
+                for (int i = 1; i < tok.length; i+=4) {
+                    Globals.fileDatabase.addRemote(new FileInfo(tok[i],
+                                                                Integer.parseInt(tok[i+1]),
+                                                                Integer.parseInt(tok[i+2]),
+                                                                tok[i+3],
+                                                                FileInfo.Types.REMOTE));
+                }
+                Globals.fileDatabase.showRemote();
+            } break;
+            case 'p': { // peers
+                for (int i = 1; i < tok.length; i++) {
+                    String[] tok2 = tok[i].split(":");
+                    Globals.peerDatabase.add(tok[1],
+                                             new PeerInfo(tok2[0],
+                                                          Integer.parseInt(tok2[1])));
+                }
+            } break;
+            case 'o': { // ok
+            } break;
+            case 'n': { // nok
+            } break;
+            default:  { // unknown
+            } break;
+        }
+        
     }
 }
 
@@ -113,7 +150,7 @@ class recvThread extends Thread {
         while (true) {
             try {
                 s = con.recv();
-                txt.append(">"+s+"\n");
+                Globals.tracker.handleResponse(s);
             } catch (IOException ex) {
                 Logger.getLogger(recvThread.class.getName()).log(Level.SEVERE, null, ex);
                 break;
