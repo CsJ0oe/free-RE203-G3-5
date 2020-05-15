@@ -5,12 +5,12 @@ public class FileInfo {
     public enum Types {SEED, LEECH, REMOTE};
     
     private final String name;
-    private final int length;
+    private final long length;
     private final int pieceSize;
     private final String key;
     private Types type;
 
-    public FileInfo(String name, int length, int pieceSize, String key, Types type) {
+    public FileInfo(String name, long length, int pieceSize, String key, Types type) {
         this.name = name;
         this.length = length;
         this.pieceSize = pieceSize;
@@ -27,7 +27,7 @@ public class FileInfo {
         return name;
     }
 
-    public int getLength() {
+    public long getLength() {
         return length;
     }
 
