@@ -33,11 +33,11 @@ map_t file_map;
 mapped_list_t file_peers;
 mapped_list_t file_names;
 
-typedef struct massege {
+typedef struct message {
     int to;
     char* str;
     int EOL;
-} massege;
+} message;
 
 typedef struct file {
     char key[64];
@@ -63,7 +63,7 @@ enum CLIENT_STATE{
     OK,
     NOK,
     EOL,
-    DESCONNECTED,
+    DISCONNECTED,
     XXX
 };
 
@@ -122,7 +122,7 @@ void client_thread (void* arg) {
             case READY: {
                 printf("READY\n");
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 
@@ -136,7 +136,7 @@ void client_thread (void* arg) {
             case ANNOUNCE: {
                 printf("ANNOUNCE\n");
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 state = PORT;
@@ -144,7 +144,7 @@ void client_thread (void* arg) {
             case PORT: {
                 printf("PORT\n");
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 sscanf(buffer,"%d",&(client->listen_port));
@@ -154,7 +154,7 @@ void client_thread (void* arg) {
             case OPTIONS: {
                 printf("OPTIONS\n");
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 switch (buffer[0]) {
@@ -165,7 +165,7 @@ void client_thread (void* arg) {
                 }
                 // remove "[" from socket buffer
                 if ((state==SEED||state==LEECH)&&socket_recv_char(client_id, buffer, 1) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
             } break;
@@ -173,22 +173,22 @@ void client_thread (void* arg) {
                 printf("SEED\n");
                 file_t tmp = malloc(sizeof(struct file));
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 strcpy(tmp->name,buffer);
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 sscanf(buffer,"%d",&(tmp->length));
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 sscanf(buffer,"%d",&(tmp->piece));
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 strcpy(tmp->key,buffer);
@@ -205,22 +205,22 @@ void client_thread (void* arg) {
                 printf("LEECH\n");
                 file_t tmp = malloc(sizeof(struct file));
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 strcpy(tmp->name,buffer);
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 sscanf(buffer,"%d",&(tmp->length));
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 sscanf(buffer,"%d",&(tmp->piece));
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 strcpy(tmp->key,buffer);
@@ -236,7 +236,7 @@ void client_thread (void* arg) {
             case LOOK: {
                 printf("LOOK\n");
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 char filename[64];
@@ -261,7 +261,7 @@ void client_thread (void* arg) {
             case GETFILE: {
                 printf("GETFILE\n");
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
                 printf("%s\n", buffer);
@@ -288,7 +288,7 @@ void client_thread (void* arg) {
             case XXX: {
                 printf("XXX\n");
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DESCONNECTED;
+                    state = DISCONNECTED;
                     break;
                 }
             } break;
@@ -307,8 +307,8 @@ void client_thread (void* arg) {
                 printf("EOL\n");
                 state = READY;
             } break;
-            case DESCONNECTED: {
-                printf("DESCONNECTED\n");
+            case DISCONNECTED: {
+                printf("DISCONNECTED\n");
                 printf("Client Disconnected (%d)\n", client_id);
                 free(clients[client_id]);
                 clients[client_id]=NULL;
@@ -321,9 +321,9 @@ void client_thread (void* arg) {
 }
 
 // sending messages to clients using thread-safe queue
-//(this thread handles all masseges sent by the server)
+//(this thread handles all messages sent by the server)
 void sender_thread (void* arg) {
-    massege* msg;
+    message* msg;
     while(1) {
         mutex_lock();
         if(queue_empty()) {
@@ -341,7 +341,7 @@ void sender_thread (void* arg) {
 
 // add msg to queue to be sent
 void send_msg(int to, int type, char* buffer) {
-    massege* msg = malloc(sizeof(massege));
+    message* msg = malloc(sizeof(message));
     msg->to = to;
     msg->str  = malloc(sizeof(char)*(strlen(buffer)+1));
     msg->EOL = type-1;
