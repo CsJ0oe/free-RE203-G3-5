@@ -3,7 +3,7 @@ package utils;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-class PeerManager {
+public class PeerManager {
     private final LinkedHashMap<String, ArrayList<PeerInfo> > peers = new LinkedHashMap<>();
 
     void add(String key, PeerInfo peer) {

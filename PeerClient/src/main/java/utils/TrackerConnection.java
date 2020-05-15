@@ -20,9 +20,9 @@ public final class TrackerConnection {
         this.txt = txt;
         con = new TcpClient(Globals.trackerIP,
                             Globals.TrackerPort);
-        rth = new recvThread(con, txt);
+        rth = new recvThread(con);
         rth.start();
-        sth = new sendThread(con, txt);
+        sth = new sendThread(con);
         sth.start();
         announce(Globals.serverPort,
                  Globals.fileDatabase.getSeedFiles(),
@@ -137,11 +137,9 @@ public final class TrackerConnection {
 class recvThread extends Thread {
     
     TcpClient con;
-    JTextArea txt;
     
-    public recvThread(TcpClient con, JTextArea txt) {
+    public recvThread(TcpClient con) {
         this.con = con;
-        this.txt = txt;
     }
     
     @Override
@@ -163,11 +161,9 @@ class recvThread extends Thread {
 class sendThread extends Thread {
     
     TcpClient con;
-    JTextArea txt;
     
-    public sendThread(TcpClient con, JTextArea txt) {
+    public sendThread(TcpClient con) {
         this.con = con;
-        this.txt = txt;
     }
     
     @Override

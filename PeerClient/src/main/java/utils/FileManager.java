@@ -1,10 +1,7 @@
 package utils;
 
-import gui.MainWindow;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.table.AbstractTableModel;
 
 public class FileManager extends AbstractTableModel {
