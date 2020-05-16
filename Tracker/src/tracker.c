@@ -117,7 +117,7 @@ void client_thread (void* arg) {
     > peers $Key [$IP1:$Port1 $IP2:$Port2 …]
     < getfile 8905e92afeb80fc7722ec89eb0bf0966
     > peers 8905e92afeb80fc7722ec89eb0bf0966 [1.1.1.2:2222 1.1.1.3:3333]
-    */
+    */printf("Buffer %s \n", buffer);
         switch (state) {
             case READY: {
                 printf("READY\n");
@@ -203,35 +203,14 @@ void client_thread (void* arg) {
             } break;
             case LEECH: {
                 printf("LEECH\n");
-                file_t tmp = malloc(sizeof(struct file));
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
                     state = DISCONNECTED;
                     break;
                 }
-                strcpy(tmp->name,buffer);
-                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DISCONNECTED;
-                    break;
-                }
-                sscanf(buffer,"%d",&(tmp->length));
-                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DISCONNECTED;
-                    break;
-                }
-                sscanf(buffer,"%d",&(tmp->piece));
-                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DISCONNECTED;
-                    break;
-                }
-                strcpy(tmp->key,buffer);
                 state = LEECH;
-                if (tmp->key[strlen(tmp->key)-1]==']') {
+                if (buffer[strlen(buffer)-1]==']') {
                     state = OPTIONS;
-                    tmp->key[strlen(tmp->key)-1] = '\0';
                 }
-                map_insert(file_map,tmp->key,tmp);
-                mapped_list_add(file_names, tmp->name, tmp);
-                mapped_list_add(file_peers, tmp->key, client);
             } break;
             case LOOK: {
                 printf("LOOK\n");
