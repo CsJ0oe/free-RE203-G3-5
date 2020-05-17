@@ -1,9 +1,11 @@
-package utils;
+package file;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -11,8 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.table.AbstractTableModel;
+import utils.Globals;
 
-public final class FileManager extends AbstractTableModel {
+public final class FileDatabase extends AbstractTableModel {
 
     private final LinkedHashMap<String, FileInfo> localFiles = new LinkedHashMap<>();
     private final LinkedHashMap<String, FileInfo> remoteFiles = new LinkedHashMap<>();
@@ -23,32 +26,50 @@ public final class FileManager extends AbstractTableModel {
         "Hash",
         "Type"};
 
-    public FileManager() {
+    public FileDatabase() {
         currentFiles = localFiles;
-        for (final File fileEntry : (new File(Globals.filePath)).listFiles()) {
+        File directory = new File(Globals.getFilePath());
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        for (final File fileEntry : directory.listFiles()) {
             if (fileEntry.isFile()) {
                 try {
                     this.add(new FileInfo(fileEntry.getName(),
                         fileEntry.length(),
                         Globals.pieceSize,
-                        FileManager.md5(fileEntry.toPath()),
+                        FileDatabase.md5(fileEntry.toPath()),
                         FileInfo.Types.SEED));
-                } catch (NoSuchAlgorithmException | IOException ex) {
-                    Logger.getLogger(FileManager.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                    Logger.getLogger(FileDatabase.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }
     }
 
-    public static String md5(Path path) throws NoSuchAlgorithmException, IOException {
-        byte[] b = Files.readAllBytes(path);
-        byte[] hash = MessageDigest.getInstance("MD5").digest(b);
-        String returnVal = "";
-        for (int i = 0; i < hash.length; i++) {
-            returnVal += Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1);
+    private static String md5(Path path) throws IOException {
+        try {
+            byte[] b = Files.readAllBytes(path);
+            byte[] hash = MessageDigest.getInstance("MD5").digest(b);
+            String returnVal = "";
+            for (int i = 0; i < hash.length; i++) {
+                returnVal += Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1);
+            }
+            return returnVal.toUpperCase();
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(FileDatabase.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return returnVal.toUpperCase();
+        return "";
+    }
 
+    public void importFile(String path) throws IOException {
+        Path original = Paths.get(path);
+        Path copie = Paths.get(Globals.getFilePath() + "/"
+            + original.getFileName().toString());
+        Files.copy(original, copie, StandardCopyOption.REPLACE_EXISTING);
+        add(new FileInfo(original.getFileName().toString(),
+            new File(path).length(),
+            Globals.pieceSize, md5(copie), FileInfo.Types.SEED));
     }
 
     public void add(FileInfo file) {
@@ -88,6 +109,7 @@ public final class FileManager extends AbstractTableModel {
         f.setType(FileInfo.Types.LEECH);
         remoteFiles.remove(f.getKey());
         this.add(f);
+        (new FileManager(f.getKey())).start();
         fireTableDataChanged();
         return f.getKey();
     }

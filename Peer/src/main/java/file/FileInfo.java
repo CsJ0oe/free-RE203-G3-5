@@ -1,4 +1,6 @@
-package utils;
+package file;
+
+import java.util.BitSet;
 
 public class FileInfo {
 
@@ -9,6 +11,7 @@ public class FileInfo {
     private final int pieceSize;
     private final String key;
     private Types type;
+    private BitSet BufferMap;
 
     public FileInfo(String name, long length, int pieceSize, String key, Types type) {
         this.name = name;
@@ -16,6 +19,7 @@ public class FileInfo {
         this.pieceSize = pieceSize;
         this.key = key;
         this.type = type;
+        this.BufferMap = new BitSet((int)Math.ceil((float)length/(float)pieceSize));
     }
 
     @Override
@@ -41,6 +45,10 @@ public class FileInfo {
     
     public Types getType() {
         return type;
+    }
+    
+    public BitSet getBufferMap() {
+        return this.BufferMap;
     }
     
     public void setType(Types ty) {

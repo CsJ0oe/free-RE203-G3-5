@@ -1,4 +1,4 @@
-package utils;
+package peer;
 
 public class PeerInfo {
     private final String ip;

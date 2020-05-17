@@ -1,12 +1,12 @@
-package utils;
+package peer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-public class PeerManager {
+public class PeerDatabase {
     private final LinkedHashMap<String, ArrayList<PeerInfo> > peers = new LinkedHashMap<>();
 
-    void add(String key, PeerInfo peer) {
+    public void add(String key, PeerInfo peer) {
         ArrayList<PeerInfo> l = peers.get(key);
         if (l == null) {
             l = new ArrayList<>();
@@ -15,11 +15,11 @@ public class PeerManager {
         l.add(peer);
     }
     
-    ArrayList<PeerInfo> get(String key) {
+    public ArrayList<PeerInfo> get(String key) {
         return peers.get(key);
     }
     
-    PeerInfo get(String key, int index) {
+    public PeerInfo get(String key, int index) {
         ArrayList<PeerInfo> l = peers.get(key);
         if (l != null) {
             return l.get(index);
