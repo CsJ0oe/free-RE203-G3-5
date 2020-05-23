@@ -124,8 +124,7 @@ void client_thread (void* arg) {
                 if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
                     state = DISCONNECTED;
                     break;
-                }
-                
+                }                
                 switch (buffer[0]) {
                     case 'a': state = ANNOUNCE; break;
                     case 'l': state = LOOK;     break;
@@ -197,9 +196,23 @@ void client_thread (void* arg) {
                     state = OPTIONS;
                     tmp->key[strlen(tmp->key)-1] = '\0';
                 }
+                //verify if already in the list
                 map_insert(file_map,tmp->key,tmp);
-                mapped_list_add(file_names, tmp->name, tmp);
-                mapped_list_add(file_peers, tmp->key, client);
+                list_t l = mapped_list_get(file_names, tmp->name);
+                if(l == NULL){
+                    mapped_list_add(file_names, tmp->name, tmp);
+                }
+                l = mapped_list_get(file_peers, tmp->key);
+                int ok = 1;
+                while (l != NULL) {
+                    if (((client_t)(l->data))->id == client->id) {
+                        ok = 0;    
+                        break;
+                    }
+                    l = mapped_list_next(l);
+                }
+                if(ok)
+                    mapped_list_add(file_peers, tmp->key, client);
             } break;
             case LEECH: {
                 printf("LEECH\n");
