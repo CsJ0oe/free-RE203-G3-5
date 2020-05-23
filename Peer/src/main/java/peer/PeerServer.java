@@ -1,4 +1,4 @@
-package peer.server;
+package peer;
 
 import java.io.IOException;
 import java.net.ServerSocket;

@@ -1,15 +1,14 @@
-package tracker.msgs;
+package tracker.msg;
 
 import java.util.ArrayList;
-import utils.Message;
+import connection.Message;
 import file.FileInfo;
 
-public class Announce extends Message {
+public class Update extends Message {
 
-    public Announce(int port, ArrayList<FileInfo> seeds, ArrayList<FileInfo> leechs) {
-        append("announce listen ");
-        append(String.valueOf(port));
-        append(" seed [");
+    public Update(ArrayList<FileInfo> seeds, ArrayList<FileInfo> leechs) {
+        super('u');
+        append("update seed [");
         boolean first = true;
         for (FileInfo seed : seeds) {
             if (first) {

@@ -1,6 +1,8 @@
 package peer;
 
-public class PeerInfo {
+public class PeerInfo extends Thread {
+    
+    
     private final String ip;
     private final int port;
 

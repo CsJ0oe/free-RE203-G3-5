@@ -24,7 +24,8 @@ public final class FileDatabase extends AbstractTableModel {
         "Length",
         "Piece Size",
         "Hash",
-        "Type"};
+        "Type",
+        "Path"};
 
     public FileDatabase() {
         currentFiles = localFiles;
@@ -39,7 +40,8 @@ public final class FileDatabase extends AbstractTableModel {
                         fileEntry.length(),
                         Globals.pieceSize,
                         FileDatabase.md5(fileEntry.toPath()),
-                        FileInfo.Types.SEED));
+                        FileInfo.Types.SEED,
+                        fileEntry.getCanonicalPath()));
                 } catch (IOException ex) {
                     Logger.getLogger(FileDatabase.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -69,7 +71,10 @@ public final class FileDatabase extends AbstractTableModel {
         Files.copy(original, copie, StandardCopyOption.REPLACE_EXISTING);
         add(new FileInfo(original.getFileName().toString(),
             new File(path).length(),
-            Globals.pieceSize, md5(copie), FileInfo.Types.SEED));
+            Globals.pieceSize,
+            md5(copie),
+            FileInfo.Types.SEED,
+            copie.toAbsolutePath().normalize().toString()));
     }
 
     public void add(FileInfo file) {
@@ -109,7 +114,6 @@ public final class FileDatabase extends AbstractTableModel {
         f.setType(FileInfo.Types.LEECH);
         remoteFiles.remove(f.getKey());
         this.add(f);
-        (new FileManager(f.getKey())).start();
         fireTableDataChanged();
         return f.getKey();
     }
@@ -149,7 +153,7 @@ public final class FileDatabase extends AbstractTableModel {
         FileInfo file = (new ArrayList<>(currentFiles.values())).get(rowIndex);
         switch (columnIndex) {
             case 0:
-                return file.getName();
+                return file.getFileName();
             case 1:
                 return file.getLength();
             case 2:
@@ -158,6 +162,8 @@ public final class FileDatabase extends AbstractTableModel {
                 return file.getKey();
             case 4:
                 return file.getType();
+            case 5:
+                return file.getPath();
         }
         return null;
     }

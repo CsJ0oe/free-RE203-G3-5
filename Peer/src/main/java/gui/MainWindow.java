@@ -9,8 +9,7 @@ import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.DefaultCaret;
 import file.FileDatabase;
 import utils.Globals;
-import peer.PeerDatabase;
-import peer.server.PeerServer;
+import peer.PeerServer;
 import tracker.TrackerConnection;
 
 public class MainWindow extends javax.swing.JFrame {
@@ -20,17 +19,17 @@ public class MainWindow extends javax.swing.JFrame {
      */
     public MainWindow() {
         Globals.fileDatabase = new FileDatabase();
-        Globals.peerDatabase = new PeerDatabase();
         initComponents();
         Globals.logArea = jTextArea1;
         try {
             Globals.peerServer = new PeerServer();
             Globals.tracker = new TrackerConnection();
+            Globals.peerServer.start();
+            Globals.tracker.start();
         } catch (IOException ex) {
             Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(1);
         }
-        Globals.peerServer.start();
-        Globals.tracker.start();
     }
 
     /**

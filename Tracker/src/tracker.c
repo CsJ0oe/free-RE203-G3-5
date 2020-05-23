@@ -53,6 +53,7 @@ void send_msg(int, int, char*);
 enum CLIENT_STATE{
     READY,
     ANNOUNCE,
+    UPDATE,
     LISTEN,
     PORT,
     OPTIONS,
@@ -128,6 +129,7 @@ void client_thread (void* arg) {
                 
                 switch (buffer[0]) {
                     case 'a': state = ANNOUNCE; break;
+                    case 'u': state = UPDATE;   break;
                     case 'l': state = LOOK;     break;
                     case 'g': state = GETFILE;  break;
                     default : state = NOK;      break;
@@ -140,6 +142,10 @@ void client_thread (void* arg) {
                     break;
                 }
                 state = PORT;
+            } break;
+            case UPDATE: {
+                printf("UPDATE\n");
+                state = OPTIONS;
             } break;
             case PORT: {
                 printf("PORT\n");

@@ -1,10 +1,11 @@
-package tracker.msgs;
+package tracker.msg;
 
-import utils.Message;
+import connection.Message;
 
 public class GetFile extends Message {
 
     public GetFile(String filekey) {
+        super('g');
         append("getfile ");
         append(filekey);
     }

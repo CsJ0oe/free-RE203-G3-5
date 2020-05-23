@@ -1,10 +1,11 @@
-package tracker.msgs;
+package tracker.msg;
 
-import utils.Message;
+import connection.Message;
 
 public class Look extends Message {
 
     public Look(String filename) {
+        super('l');
         append("look [filename=\"");
         append(filename);
         append("\"]");
