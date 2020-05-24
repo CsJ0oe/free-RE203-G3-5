@@ -2,10 +2,8 @@ package peer;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.BitSet;
 import java.util.logging.Level;
 import file.FileInfo;
-import java.util.ArrayList;
 import peer.msg.Data;
 import peer.msg.Have;
 import utils.Globals;

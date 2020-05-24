@@ -53,7 +53,7 @@ public final class FileDatabase extends AbstractTableModel {
         Timer timer = new Timer(0, (ActionEvent e) -> {
             Globals.fileDatabase.forceRefresh();
         });
-        timer.setDelay(1000);
+        timer.setDelay(5000);
         timer.start();
     }
 
@@ -80,6 +80,10 @@ public final class FileDatabase extends AbstractTableModel {
         Path original = Paths.get(path);
         Path copie = Paths.get(Globals.getFilePath() + "/"
             + original.getFileName().toString());
+        File dir = copie.toFile();
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
         Files.copy(original, copie, StandardCopyOption.REPLACE_EXISTING);
         add(new FileInfo(original.getFileName().toString(),
             new File(path).length(),

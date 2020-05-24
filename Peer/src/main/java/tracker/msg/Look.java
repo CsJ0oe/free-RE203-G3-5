@@ -1,6 +1,7 @@
 package tracker.msg;
 
 import connection.Message;
+import utils.Logger;
 
 public class Look extends Message {
 
@@ -9,6 +10,7 @@ public class Look extends Message {
         append("look [filename=\"");
         append(filename);
         append("\"]");
+        Logger.log("< "+this);
     }
 
 }

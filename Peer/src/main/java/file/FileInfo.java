@@ -139,9 +139,10 @@ public class FileInfo extends Thread {
         int i = 0;
         while (i < am.length && res.size() < Globals.maxPiecesPerRequest) {
             if ( am[i] == true && !BufferMap.get(i) &&
-                                 !DownloadedBufferMap.get(i) &&
-                                 !DownloadingBufferMap.get(i)) {
+                                  !DownloadedBufferMap.get(i) &&
+                                  !DownloadingBufferMap.get(i)) {
                 res.add(i);
+                DownloadingBufferMap.set(i);
             }
             i++;
         }
@@ -149,6 +150,7 @@ public class FileInfo extends Thread {
             // is file completed downloading
             this.type = Types.DONE;
             Storage.assemblePieces(this);
+            this.BufferMap.set(0, nbPieces);
             this.type = Types.SEED;
         }
         return res;

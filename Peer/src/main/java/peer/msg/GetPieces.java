@@ -2,6 +2,8 @@ package peer.msg;
 
 import java.util.ArrayList;
 import connection.Message;
+import utils.ByteTab;
+import utils.Logger;
 
 public class GetPieces extends Message {
 
@@ -15,6 +17,7 @@ public class GetPieces extends Message {
         append(key);
         append(" [");
         boolean first = true;
+        String tmp = "";
         for (Integer piece : pieces) {
             if (first) {
                 first = false;
@@ -22,16 +25,22 @@ public class GetPieces extends Message {
                 append(" ");
             }
             append(piece.toString());
+            tmp+=piece+" ";
         }
         append("]");
+        Logger.log("< "+this);
     }
 
-    public GetPieces(String[] tok) { // getpieces $Key [$Index1 $Index2 $Index3 …]
+    public GetPieces(ByteTab t) { // getpieces $Key [$Index1 $Index2 $Index3 …]
         super('g');
-        this.key = tok[1].strip();
-        for (int i = 2; i < tok.length; i++) {
-            list.add(Integer.valueOf(tok[i].strip()));
+        this.key = t.nextWord();
+        String tmp = "";
+        for (int i = 2; i < t.length(); i++) {
+            int x = t.nextInt();
+            list.add(x);
+            tmp+=x+" ";
         }
+        Logger.log("> getpieces "+key+" ["+tmp+"]");
         
     }
     

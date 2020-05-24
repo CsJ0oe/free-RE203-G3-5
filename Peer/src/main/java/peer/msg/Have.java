@@ -3,6 +3,8 @@ package peer.msg;
 import file.FileInfo;
 import java.util.BitSet;
 import connection.Message;
+import utils.ByteTab;
+import utils.Logger;
 
 public class Have extends Message {
 
@@ -20,15 +22,18 @@ public class Have extends Message {
         for (int i = 0; i < bm.length(); i++) {
             append(bm.get(i) == true ? "1" : "0");
         }
+        Logger.log("> have "+f.getKey());
     }
 
-    public Have(String[] tok) { // have $Key $BufferMap
+    public Have(ByteTab s) { // have $Key $BufferMap
         super('h');
-        this.key = tok[1].strip();
-        this.BufferMap = new boolean[tok[2].length()];
-        for (int i = 0; i < tok[2].length(); i++) {
-            this.BufferMap[i] = (tok[2].charAt(i) == '1');
+        this.key = s.nextWord();
+        String a = s.nextWord();
+        this.BufferMap = new boolean[a.length()];
+        for (int i = 0; i < a.length(); i++) {
+            this.BufferMap[i] = (a.charAt(i) == '1');
         }
+        Logger.log("> have "+key);
     }
 
     public String getKey() {

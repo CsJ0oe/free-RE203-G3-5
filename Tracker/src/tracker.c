@@ -65,7 +65,6 @@ enum CLIENT_STATE{
     NOK,
     EOL,
     DISCONNECTED,
-    XXX
 };
 
 int main(int argc, char const *argv[]) {
@@ -131,6 +130,8 @@ void client_thread (void* arg) {
                     case 'u': state = UPDATE;   break;
                     case 'l': state = LOOK;     break;
                     case 'g': state = GETFILE;  break;
+
+                    case ' ': state = READY;  	break;
                     default : state = NOK;      break;
                 }                 
             } break;
@@ -283,21 +284,14 @@ void client_thread (void* arg) {
                 send_msg(client_id, 2, "]");
                 state = EOL;
             } break;
-            case XXX: {
-                printf("XXX\n");
-                if (socket_recv_word(client_id, buffer, sizeof(buffer)) > 0) {
-                    state = DISCONNECTED;
-                    break;
-                }
-            } break;
             case OK: {
                 printf("OK\n");
-                send_msg(client_id, 2, "OK");
+                send_msg(client_id, 2, "ok");
                 state = EOL;
             } break;
             case NOK: {
                 printf("NOK\n");
-                send_msg(client_id, 2, "NOK");
+                send_msg(client_id, 2, "nok");
                 state = EOL;
             } break;
             case EOL: {

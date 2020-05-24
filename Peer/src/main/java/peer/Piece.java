@@ -4,9 +4,9 @@ public class Piece {
 
     private final String key;
     private final int index;
-    private final String data;
+    private final byte[] data;
 
-    public Piece(String key, int id, String data) {
+    public Piece(String key, int id, byte[] data) {
         this.key = key;
         this.index = id;
         this.data = data;
@@ -20,7 +20,7 @@ public class Piece {
         return index;
     }
 
-    public String getData() {
+    public byte[] getData() {
         return data;
     }
 

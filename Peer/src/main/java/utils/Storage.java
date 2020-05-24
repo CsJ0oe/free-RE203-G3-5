@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import peer.Piece;
@@ -15,7 +16,7 @@ public class Storage {
     public static byte[] readPiece(FileInfo f, int piece) throws IOException {
         int size = Globals.pieceSize;
         int start = piece * size;
-        return readFromFile(f.getPath(), start, size);
+        return Base64.getEncoder().encode(readFromFile(f.getPath(), start, size));
     }
 
     public static void writePiece(Piece piece) throws IOException {
@@ -24,7 +25,7 @@ public class Storage {
             dir.mkdirs();
         }
         String filename = Globals.getTmpPath() + "/" + piece.getKey() + "." + piece.getIndex();
-        byte[] bytes = piece.getData().getBytes();
+        byte[] bytes = Base64.getDecoder().decode(piece.getData());
         writeToFile(filename, bytes, bytes.length);
     }
 

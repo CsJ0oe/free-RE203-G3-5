@@ -9,11 +9,11 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import peer.msg.Data;
 import peer.msg.GetPieces;
 import peer.msg.Have;
 import peer.msg.Interested;
+import utils.ByteTab;
 import utils.Logger;
 
 public class TcpClient {
@@ -32,7 +32,6 @@ public class TcpClient {
         this.soc = new Socket(address, port);
         bos = new BufferedOutputStream(soc.getOutputStream());
         bis = new BufferedInputStream(soc.getInputStream());
-        //TODO: use StringBuffer instead
     }
 
     public TcpClient(Socket soc) throws UnknownHostException, IOException {
@@ -42,7 +41,6 @@ public class TcpClient {
         this.ip = this.address.getHostAddress();
         bos = new BufferedOutputStream(soc.getOutputStream());
         bis = new BufferedInputStream(soc.getInputStream());
-        //TODO: use StringBuffer instead
     }
 
     public String getIP() {
@@ -55,43 +53,43 @@ public class TcpClient {
 
     public void sendMsg(Message msg) throws IOException {
         //Logger.log("< " + msg.toString());
-        send(msg.toString());
+        send(msg.toBytes());
         send("\n");
         flush();
     }
 
     public Message recvMsg() throws IOException {
-        String s = new String(recv());
-        //Logger.log("> " + s);
-        String[] tok = s.replaceAll("[\\[\\]]", "").replaceAll("  ", " ").strip().split(" ");
-        if (tok[0].length() == 0) {
+        ByteTab s = new ByteTab(recv());
+        //Logger.log("> " + new String(s.data));
+        if (s.length() == 0) {
             Logger.log("! empty resp");
-            return null;
+            return recvMsg();
         }
+        
         Message res = null;
-        switch (tok[0].charAt(0)) {
+        switch (s.nextWord().charAt(0)) {
             case 'l': { //list [$Filename1 $Length1 $PieceSize1 $Key1 $Filename2 $Length2 $PieceSize2 $Key2 …]
-                res = new FileList(tok);
+                res = new FileList(s);
             }
             break;
             case 'p': { // peers $Key [$IP1:$Port1 $IP2:$Port2 …]
-                res = new Peers(tok);
+                res = new Peers(s);
             }
             break;
             case 'i': { // interested $Key
-                res = new Interested(tok);
+                res = new Interested(s);
             }
             break;
             case 'g': { // getpieces $Key [$Index1 $Index2 $Index3 …]
-                res = new GetPieces(tok);
+                res = new GetPieces(s);
             }
             break;
             case 'h': { // have $Key $BufferMap
-                res = new Have(tok);
+                res = new Have(s);
             }
             break;
             case 'd': { // data $Key [$Index1:$Piece1 $Index2:$Piece2 $Index3:$Piece3 …]
-                res = new Data(tok);
+                res = new Data(s);
             }
             break;
             case 'o': { // ok
@@ -103,6 +101,7 @@ public class TcpClient {
             }
             break;
             default: { // unknown
+                res = recvMsg();
             }
         }
         return res;
@@ -130,6 +129,10 @@ public class TcpClient {
 
     private void send(String msg) throws IOException {
         bos.write(msg.getBytes()); // TODO: fix charset
+    }
+    
+    private void send(byte[] msg) throws IOException {
+        bos.write(msg);
     }
 
     private void flush() throws IOException {

@@ -1,39 +1,49 @@
 package connection;
 
+import java.util.ArrayList;
+
 public class Message {
-    
+
     private final char type;
-    private final StringBuffer msg = new StringBuffer();
+    private final ArrayList<Byte> msg = new ArrayList<>();
 
     public Message(char type) {
         this.type = type;
     }
 
     protected final void append(String s) {
-        msg.append(s);
+        append(s.getBytes());
     }
-    
+
     protected final void append(int i) {
-        msg.append(Integer.valueOf(i));
+        append(Integer.valueOf(i));
     }
-    
+
     protected final void append(Integer i) {
-        msg.append(i.toString());
+        append(i.toString());
     }
-    
+
     protected final void append(byte[] data) {
         for (byte b : data) {
-            msg.append(b);
+            msg.add(b);
         }
     }
-    
+
     public final char getType() {
         return this.type;
     }
-    
+
+    public byte[] toBytes() {
+        byte[] res = new byte[msg.size()];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = msg.get(i);
+        }
+        return res;
+    }
+
     @Override
     public final String toString() {
-        return msg.toString();
+        return new String(toBytes());
     }
-    
+
 }

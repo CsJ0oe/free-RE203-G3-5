@@ -1,6 +1,8 @@
 package peer.msg;
 
 import connection.Message;
+import utils.ByteTab;
+import utils.Logger;
 
 public class Interested extends Message {
 
@@ -11,11 +13,13 @@ public class Interested extends Message {
         this.key = key;
         append("interested ");
         append(key);
+        Logger.log("< interested "+key);
     }
 
-    public Interested(String[] tok) { // interested $Key
+    public Interested(ByteTab s) { // interested $Key
         super('i');
-        this.key = tok[1].strip();
+        this.key = s.nextWord();
+        Logger.log("> interested "+key);
     }
     
     public String getKey() {

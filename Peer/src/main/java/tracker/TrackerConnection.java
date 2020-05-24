@@ -16,7 +16,6 @@ import utils.Globals;
 import utils.Logger;
 import peer.PeerInfo;
 import connection.TcpClient;
-import file.FileInfoLight;
 
 public final class TrackerConnection extends Thread {
 
@@ -34,7 +33,7 @@ public final class TrackerConnection extends Thread {
     public void run() {
         Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
             try {
-                Globals.tracker.announce(Globals.serverPort,Globals.fileDatabase.getSeedFiles(),
+                Globals.tracker.update(Globals.fileDatabase.getSeedFiles(),
                                        Globals.fileDatabase.getLeechFiles());
             } catch (IOException ex) {
                 Logger.log(ex.toString());

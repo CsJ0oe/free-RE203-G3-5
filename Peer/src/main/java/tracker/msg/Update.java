@@ -3,31 +3,39 @@ package tracker.msg;
 import java.util.ArrayList;
 import connection.Message;
 import file.FileInfo;
+import utils.Logger;
 
 public class Update extends Message {
 
     public Update(ArrayList<FileInfo> seeds, ArrayList<FileInfo> leechs) {
         super('u');
-        append("update seed [");
-        boolean first = true;
-        for (FileInfo seed : seeds) {
-            if (first) {
-                first = false;
-            } else {
-                append(" ");
+        append("update");
+        if (!seeds.isEmpty()) {
+            append(" seed [");
+            boolean first = true;
+            for (FileInfo seed : seeds) {
+                if (first) {
+                    first = false;
+                } else {
+                    append(" ");
+                }
+                append(seed.toString());
             }
-            append(seed.toString());
+            append("]");
         }
-        append("] leech [");
-        first = true;
-        for (FileInfo leech : leechs) {
-            if (first) {
-                first = false;
-            } else {
-                append(" ");
+        if (!leechs.isEmpty()) {
+            append(" leech [");
+            boolean first = true;
+            for (FileInfo leech : leechs) {
+                if (first) {
+                    first = false;
+                } else {
+                    append(" ");
+                }
+                append(leech.getKey());
             }
-            append(leech.toString());
+            append("]");
         }
-        append("]");
+        Logger.log("< "+this);
     }
 }
