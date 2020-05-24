@@ -1,5 +1,7 @@
 package file;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Timer;
 import javax.swing.table.AbstractTableModel;
 import utils.Globals;
 
@@ -25,7 +28,7 @@ public final class FileDatabase extends AbstractTableModel {
         "Piece Size",
         "Hash",
         "Type",
-        "Path"};
+        "Progress"};
 
     public FileDatabase() {
         currentFiles = localFiles;
@@ -47,8 +50,17 @@ public final class FileDatabase extends AbstractTableModel {
                 }
             }
         }
+        Timer timer = new Timer(0, (ActionEvent e) -> {
+            Globals.fileDatabase.forceRefresh();
+        });
+        timer.setDelay(1000);
+        timer.start();
     }
 
+    public void forceRefresh() {
+        fireTableDataChanged();
+    }
+    
     private static String md5(Path path) throws IOException {
         try {
             byte[] b = Files.readAllBytes(path);
@@ -163,7 +175,7 @@ public final class FileDatabase extends AbstractTableModel {
             case 4:
                 return file.getType();
             case 5:
-                return file.getPath();
+                return file.getProgress();
         }
         return null;
     }

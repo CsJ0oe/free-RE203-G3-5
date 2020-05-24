@@ -8,16 +8,20 @@ import peer.PeerInfo;
 import peer.PeerConnection;
 import utils.Globals;
 import utils.Logger;
+import utils.Storage;
 
 public class FileInfo extends Thread {
 
+
+
     public enum Types {
-        SEED, LEECH, REMOTE
+        SEED, LEECH, REMOTE, DONE
     };
 
     private final String name;
     private final int length;
     private final int pieceSize;
+    private final int nbPieces;
     private final String key;
     private final String path;
     private final BitSet BufferMap;
@@ -33,16 +37,17 @@ public class FileInfo extends Thread {
         this.length = (int)length;
         this.pieceSize = pieceSize;
         this.key = key;
+        this.nbPieces = (int) Math.ceil((float) length / (float) pieceSize);
         this.type = type;
         this.path = path;
         this.peerList = new ArrayList<>();
         this.connectedPeers = new ArrayList<>();
-        this.BufferMap = new BitSet((int) Math.ceil((float) length / (float) pieceSize));
+        this.BufferMap = new BitSet(nbPieces);
         if (type == Types.SEED) {
-            this.BufferMap.set(0, (int) Math.ceil((float) length / (float) pieceSize));
+            this.BufferMap.set(0, nbPieces);
         }
-        this.DownloadingBufferMap = new BitSet((int) Math.ceil((float) length / (float) pieceSize));
-        this.DownloadedBufferMap = new BitSet((int) Math.ceil((float) length / (float) pieceSize));
+        this.DownloadingBufferMap = new BitSet(nbPieces);
+        this.DownloadedBufferMap = new BitSet(nbPieces);
         if (type != Types.REMOTE) {
             start();
         }
@@ -112,6 +117,15 @@ public class FileInfo extends Thread {
         }
         this.type = ty;
     }
+    
+    public int getProgress() {
+        switch (type) {
+            case SEED:  return 100;
+            case DONE:  return 99;
+            case LEECH: return 100*DownloadedBufferMap.cardinality()/nbPieces;
+            default:    return -1;
+        }
+    }
 
     public void addPeer(PeerInfo peer) {
         peerList.add(peer);
@@ -131,7 +145,19 @@ public class FileInfo extends Thread {
             }
             i++;
         }
+        if (res.isEmpty() && DownloadedBufferMap.cardinality() == this.nbPieces) {
+            // is file completed downloading
+            this.type = Types.DONE;
+            Storage.assemblePieces(this);
+            this.type = Types.SEED;
+        }
         return res;
     }
+
+    public int getNbPieces() {
+        return nbPieces;
+    }
+    
+    
     
 }

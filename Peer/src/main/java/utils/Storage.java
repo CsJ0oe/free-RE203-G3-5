@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import peer.Piece;
 
 public class Storage {
@@ -17,13 +19,25 @@ public class Storage {
     }
 
     public static void writePiece(Piece piece) throws IOException {
-        File dir = new File(Globals.tmpPath);
+        File dir = new File(Globals.getTmpPath());
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        String filename = Globals.tmpPath + "/" + piece.getKey() + "." + piece.getIndex();
+        String filename = Globals.getTmpPath() + "/" + piece.getKey() + "." + piece.getIndex();
         byte[] bytes = piece.getData().getBytes();
         writeToFile(filename, bytes, bytes.length);
+    }
+
+    public static void assemblePieces(FileInfo f) {
+        String piecename = Globals.getTmpPath() + "/" + f.getKey() + ".";
+        try {
+            for (int i = 0; i < f.getNbPieces(); i++) {
+                byte[] data = readFromFile(piecename + i, 0, Globals.pieceSize);
+                writeToFile(Globals.getFilePath()+f.getFileName(), data, data.length);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Storage.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private static byte[] readFromFile(String filePath, int start, int size) throws FileNotFoundException, IOException {
@@ -31,7 +45,8 @@ public class Storage {
         try (RandomAccessFile file = new RandomAccessFile(filePath, "r")) {
             if (file.length() < start + size) {
                 size = (int) (file.length() - start);
-            }   file.seek(start);
+            }
+            file.seek(start);
             bytes = new byte[size];
             file.read(bytes);
         }
