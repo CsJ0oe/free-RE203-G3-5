@@ -8,6 +8,7 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.DefaultCaret;
 import file.FileDatabase;
+import org.ini4j.Ini;
 import utils.Globals;
 import peer.PeerServer;
 import tracker.TrackerConnection;
@@ -18,6 +19,20 @@ public class MainWindow extends javax.swing.JFrame {
      * Creates new form MainWindow
      */
     public MainWindow() {
+        Ini ini;
+        try {
+            ini = new Ini(new File("config.ini"));
+            Globals.trackerIP           =                  ini.get("config", "tracker-address");
+            Globals.TrackerPort         = Integer.parseInt(ini.get("config", "tracker-port"));
+            Globals.serverPort          = Integer.parseInt(ini.get("config", "server-port"));
+            Globals.dataPath            =                  ini.get("config", "data-path");
+            Globals.tmpPostfix          =                  ini.get("config", "tmp-postfix");
+            Globals.pieceSize           = Integer.parseInt(ini.get("config", "piece-size"));
+            Globals.maxPeersPerFile     = Integer.parseInt(ini.get("config", "max-peers-per-file"));
+            Globals.maxPiecesPerRequest = Integer.parseInt(ini.get("config", "max-pieces-per-request"));
+        } catch (IOException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        }
         Globals.fileDatabase = new FileDatabase();
         initComponents();
         Globals.logArea = jTextArea1;
