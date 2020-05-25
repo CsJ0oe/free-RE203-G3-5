@@ -29,7 +29,7 @@ public class Storage {
         writeToFile(filename, bytes, bytes.length);
     }
 
-    public static void assemblePieces(FileInfo f) {
+    public static String assemblePieces(FileInfo f) {
         String piecename = Globals.getTmpPath() + "/" + f.getKey() + ".";
         try {
             for (int i = 0; i < f.getNbPieces(); i++) {
@@ -39,6 +39,7 @@ public class Storage {
         } catch (IOException ex) {
             Logger.getLogger(Storage.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return Globals.getFilePath()+f.getFileName();
     }
 
     private static byte[] readFromFile(String filePath, int start, int size) throws FileNotFoundException, IOException {

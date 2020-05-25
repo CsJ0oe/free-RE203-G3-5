@@ -176,6 +176,7 @@ public class MainWindow extends javax.swing.JFrame {
                 try {
                     String s = Globals.fileDatabase.makeLocal(selected[i]);
                     Globals.tracker.getfile(s);
+                    jTextField6.setText("");
                 } catch (IOException ex) {
                     Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
                 }

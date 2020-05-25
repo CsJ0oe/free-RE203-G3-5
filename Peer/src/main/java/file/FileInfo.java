@@ -23,7 +23,7 @@ public class FileInfo extends Thread {
     private final int pieceSize;
     private final int nbPieces;
     private final String key;
-    private final String path;
+    private String path;
     private final BitSet BufferMap;
     private final BitSet DownloadingBufferMap;
     private final BitSet DownloadedBufferMap;
@@ -149,7 +149,8 @@ public class FileInfo extends Thread {
         if (res.isEmpty() && DownloadedBufferMap.cardinality() == this.nbPieces) {
             // is file completed downloading
             this.type = Types.DONE;
-            Storage.assemblePieces(this);
+            this.path = Storage.assemblePieces(this);
+            
             this.BufferMap.set(0, nbPieces);
             this.type = Types.SEED;
         }
