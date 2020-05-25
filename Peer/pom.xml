@@ -4,7 +4,7 @@
     <groupId>fr.enseirb</groupId>
     <name>Peer</name>
     <artifactId>Peer</artifactId>
-    <version>2.3</version>
+    <version>2.3.2</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

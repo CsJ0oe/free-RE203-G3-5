@@ -12,8 +12,6 @@ import utils.Storage;
 
 public class FileInfo extends Thread {
 
-
-
     public enum Types {
         SEED, LEECH, REMOTE, DONE
     };
@@ -34,7 +32,7 @@ public class FileInfo extends Thread {
 
     public FileInfo(String name, long length, int pieceSize, String key, Types type, String path) {
         this.name = name;
-        this.length = (int)length;
+        this.length = (int) length;
         this.pieceSize = pieceSize;
         this.key = key;
         this.nbPieces = (int) Math.ceil((float) length / (float) pieceSize);
@@ -106,7 +104,7 @@ public class FileInfo extends Thread {
     public String getPath() {
         return path;
     }
-    
+
     public BitSet getBufferMap() {
         return this.BufferMap;
     }
@@ -117,30 +115,36 @@ public class FileInfo extends Thread {
         }
         this.type = ty;
     }
-    
+
     public int getProgress() {
         switch (type) {
-            case SEED:  return 100;
-            case DONE:  return 99;
-            case LEECH: return 100*DownloadedBufferMap.cardinality()/nbPieces;
-            default:    return -1;
+            case SEED:
+                return 100;
+            case DONE:
+                return 99;
+            case LEECH:
+                return 100 * DownloadedBufferMap.cardinality() / nbPieces;
+            default:
+                return -1;
         }
     }
 
     public void addPeer(PeerInfo peer) {
         peerList.add(peer);
     }
-    
-    public synchronized ArrayList<Integer> selectPiecesToDownload(boolean[] am, boolean[] dm)  {
+
+    public synchronized ArrayList<Integer> selectPiecesToDownload(boolean[] am, boolean[] dm) {
         for (int i = 0; i < dm.length; i++) {
-           DownloadedBufferMap.set(i, dm[i]);
+            if (dm[i] == true) {
+                DownloadedBufferMap.set(i);
+            }
         }
         ArrayList<Integer> res = new ArrayList<>();
         int i = 0;
         while (i < am.length && res.size() < Globals.maxPiecesPerRequest) {
-            if ( am[i] == true && !BufferMap.get(i) &&
-                                  !DownloadedBufferMap.get(i) &&
-                                  !DownloadingBufferMap.get(i)) {
+            if (am[i] == true && !BufferMap.get(i)
+                && !DownloadedBufferMap.get(i)
+                && !DownloadingBufferMap.get(i)) {
                 res.add(i);
                 DownloadingBufferMap.set(i);
             }
@@ -150,7 +154,6 @@ public class FileInfo extends Thread {
             // is file completed downloading
             this.type = Types.DONE;
             this.path = Storage.assemblePieces(this);
-            
             this.BufferMap.set(0, nbPieces);
             this.type = Types.SEED;
         }
@@ -160,7 +163,5 @@ public class FileInfo extends Thread {
     public int getNbPieces() {
         return nbPieces;
     }
-    
-    
-    
+
 }
